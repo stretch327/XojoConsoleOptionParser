@@ -22,8 +22,6 @@ Inherits ConsoleApplication
 		  // You can access options either by their long or short names regardless of what the user specified on the command-line
 		  // params.Value("username") is equivalent to params.Value("u")
 		  
-		  
-		  
 		  dim myString as string = params.Value("s")
 		  dim myBool as Boolean = params.Value("boolean")
 		  
