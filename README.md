@@ -1,7 +1,10 @@
 # XojoConsoleOptionParser
 A class for parsing command-line options in a xojo console app
 
-For easy access, save this project as a binary project into the Project Templates folder next to your IDE.
+For easy access, save this project as a binary project into the Project Templates folder next to your IDE or into the global Project Templates folder found here:
+
+macOS/Linux: ~/Documents/Xojo/IDE/Project Templates<br>
+Windows    : %HOME%\Documents\Xojo\IDE\Project Templates
 
 ## Usage
 Initialize your parameters in the App.Run event using the Params.AddOption method. The parameters are:
