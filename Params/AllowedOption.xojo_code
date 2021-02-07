@@ -1,5 +1,5 @@
 #tag Class
-Protected Class AllowedOption
+Class AllowedOption
 	#tag Method, Flags = &h0
 		Sub Constructor(Name as String, Letter as String, Required as Boolean, Type as AllowedOption.OptionTypes, Description as string = "", StoreAsName as string = "")
 		  self.LongOptionName = name
@@ -35,35 +35,41 @@ Protected Class AllowedOption
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Function OptionUsageMessage(longlength as integer) As String
-		  dim sa() as string
+		Function OptionUsageMessage(longestlength as integer) As String
+		  Dim sa() As String
 		  
-		  longlength = longlength - len(LongOptionName)
+		  If LongOptionName = "" Then
+		    Break
+		  End If
+		  
+		  longestlength = longestlength - Len(LongOptionName)
 		  if LongOptionName<>"" then
 		    sa.Append "--" + LongOptionName
+		  Else
+		    sa.Append "  "
 		  end if
 		  
-		  dim s as string = ""
+		  Dim s As String = ""
+		  
 		  // Add spacing to make them even
-		  for i as integer = 1 to longlength
+		  For i As Integer = 1 To longestlength
 		    s = s + " "
 		  next
 		  
 		  if ShortOptionLetter<>"" then
 		    s = s + "-" + ShortOptionLetter
-		  end if
+		  End If
 		  
 		  sa.Append s
 		  
 		  s = join(sa,", ")
 		  
-		  if ShortOptionLetter="" then
-		    s = s + "   "
+		  If ShortOptionLetter="" Or LongOptionName = "" Then
+		    s = s.Replace(","," ") + "  "
 		  end if
 		  
 		  // Spacing before the description
 		  s = s + "     "
-		  
 		  
 		  if Description<>"" then s = s + Description + "."
 		  if Required then s = s + " Required. "
