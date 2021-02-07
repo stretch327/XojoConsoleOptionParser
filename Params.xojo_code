@@ -19,6 +19,16 @@ Protected Module Params
 		End Function
 	#tag EndMethod
 
+	#tag Method, Flags = &h1
+		Protected Function GetFolderitem(optionName as string) As FolderItem
+		  If Options.HasKey(optionName) Then
+		    return ParsePath(params.value(optionName))
+		  else
+		    return nil
+		  end if
+		End Function
+	#tag EndMethod
+
 	#tag Method, Flags = &h21
 		Private Function GetLongArgName(argname as string) As String
 		  for i as integer = 0 to UBound(AllowedOptions)
@@ -42,7 +52,7 @@ Protected Module Params
 	#tag EndMethod
 
 	#tag Method, Flags = &h1
-		Protected Function GetPathForOption(name as string) As FolderItem
+		Attributes( Deprecated = "GetFolderItem" ) Protected Function GetPathForOption(name as string) As FolderItem
 		  if Options.HasKey(name) then
 		    return ParsePath(params.value(name))
 		  else
@@ -52,17 +62,17 @@ Protected Module Params
 	#tag EndMethod
 
 	#tag Method, Flags = &h1
-		Protected Function HasKey(name as string) As Boolean
+		Protected Function HasKey(optionName as string) As Boolean
 		  // First, make sure we're asking for the correct name
-		  if Options.HasKey(name) then
+		  If Options.HasKey(optionName) Then
 		    return True
 		  end if
 		  
 		  for i as integer = 0 to UBound(AllowedOptions)
 		    dim opt as Params.AllowedOption = AllowedOptions(i)
-		    if opt.LongOptionName = name and Options.HasKey(opt.ShortOptionLetter) then
+		    If opt.LongOptionName = optionName And Options.HasKey(opt.ShortOptionLetter) Then
 		      return True
-		    elseif opt.ShortOptionLetter = name and Options.HasKey(opt.LongOptionName) then
+		    elseif opt.ShortOptionLetter = optionName and Options.HasKey(opt.LongOptionName) then
 		      return True
 		    end if
 		  next
@@ -72,17 +82,17 @@ Protected Module Params
 	#tag EndMethod
 
 	#tag Method, Flags = &h1
-		Protected Function Lookup(name as string, defaultvalue as variant) As variant
+		Protected Function Lookup(optionName as string, defaultvalue as variant) As variant
 		  // First, make sure we're asking for the correct name
-		  if Options.HasKey(name) then
-		    return Options.value(name)
+		  If Options.HasKey(optionName) Then
+		    Return Options.value(optionName)
 		  end if
 		  
 		  for i as integer = 0 to UBound(AllowedOptions)
 		    dim opt as Params.AllowedOption = AllowedOptions(i)
-		    if opt.LongOptionName = name and Options.HasKey(opt.ShortOptionLetter) then
+		    If opt.LongOptionName = optionName And Options.HasKey(opt.ShortOptionLetter) Then
 		      return Params.value(opt.ShortOptionLetter)
-		    elseif opt.ShortOptionLetter = name and Options.HasKey(opt.LongOptionName) then
+		    elseif opt.ShortOptionLetter = optionName and Options.HasKey(opt.LongOptionName) then
 		      return Params.value(opt.LongOptionName)
 		    end if
 		  next
@@ -93,8 +103,31 @@ Protected Module Params
 	#tag EndMethod
 
 	#tag Method, Flags = &h1
-		Protected Function ParseOptions(args() as string) As Boolean
-		  options = new Dictionary
+		Protected Function ParseOptions(args() as string, appDescription as string = "") As Boolean
+		  If appDescription <> "" Then
+		    stderr.WriteLine appDescription
+		  End If
+		  
+		  // First, lets make sure there are no duplicates
+		  Dim optionDuplicate As Boolean = False
+		  For i As Integer = 0 To UBound(AllowedOptions) - 1
+		    For j As Integer = i + 1 To UBound(AllowedOptions)
+		      If AllowedOptions(i).ShortOptionLetter = AllowedOptions(j).ShortOptionLetter And AllowedOptions(i).ShortOptionLetter <> "" Then
+		        stderr.WriteLine "Duplicate Short Option Definition: " + AllowedOptions(i).ShortOptionLetter + " on " + AllowedOptions(i).LongOptionName + " and " + AllowedOptions(j).LongOptionName
+		        optionDuplicate = True
+		      End If
+		      If AllowedOptions(i).LongOptionName = AllowedOptions(j).LongOptionName And AllowedOptions(i).LongOptionName <> "" Then
+		        stderr.WriteLine "Duplicate Long Option Definition: " + AllowedOptions(i).LongOptionName + " on " + AllowedOptions(i).ShortOptionLetter + " and " + AllowedOptions(j).ShortOptionLetter
+		        optionDuplicate = True
+		      End If
+		    Next
+		  Next
+		  
+		  If optionDuplicate Then
+		    Return False
+		  End If
+		  
+		  options = New Dictionary
 		  
 		  dim errorMessages() as string
 		  
@@ -106,8 +139,12 @@ Protected Module Params
 		    case left(arg,2) = "--"
 		      // Deal with extended options
 		      arg = mid(arg,3)
-		      if trim(arg)<>"" then
-		        dim p as integer = instr(arg,"=")
+		      If trim(arg) <> "" Then
+		        If instr(arg, "=") = 0 Then
+		          errorMessages.Append arg + " must be followed by ="
+		        End If
+		        
+		        Dim p As Integer = instr(arg, "=")
 		        dim argName as string
 		        dim value as Variant
 		        if p>0 then
@@ -148,12 +185,13 @@ Protected Module Params
 		      opt = GetAllowedOptionByName(lastarg)
 		      if opt<>nil then
 		        if opt.Type = AllowedOption.OptionTypes.Flag then
-		          Options.Value(opt.StoreAs) = true
+		          Options.Value(opt.StoreAs) = True
 		        elseif UBound(args) > i and (left(args(i+1),1)<>"-" or CountFields(args(i+1)," ") > 1) then
 		          Options.value(opt.StoreAs) = args(i+1)
 		          i = i + 1
-		        else
-		          return False
+		        Else
+		          stderr.WriteLine "Option " + lastarg + " requires a value."
+		          Return False
 		        end if
 		      end if
 		      
@@ -252,7 +290,71 @@ Protected Module Params
 
 	#tag Method, Flags = &h1
 		Protected Sub PrintUsage()
-		  stderr.writeline "Usage: " + app.ExecutableFile.Name.replace(".debug","")
+		  If trim(Description) = "" Then
+		    stderr.WriteLine Description
+		  End If
+		  stderr.WriteLine ""
+		  Dim usage As String = "usage: " + app.ExecutableFile.Name.replace(".debug", "")
+		  
+		  // add all of the parameters to the usage statement by type
+		  Dim requireds() As String
+		  Dim optionals() As String
+		  For i As Integer = 0 To UBound(AllowedOptions)
+		    Dim optname As String = "-" + AllowedOptions(i).ShortOptionLetter
+		    If optname = "-" Then optname = "--" + AllowedOptions(i).LongOptionName
+		    
+		    Dim type As String
+		    Select Case AllowedOptions(i).Type
+		    Case AllowedOption.OptionTypes.Boolean
+		      type = "boolean"
+		      
+		    Case AllowedOption.OptionTypes.File
+		      type = "file"
+		      
+		    Case AllowedOption.OptionTypes.Flag
+		      // No type, it's just a flag
+		      
+		    Case AllowedOption.OptionTypes.Float
+		      type = "float"
+		      
+		    Case AllowedOption.OptionTypes.Folder
+		      type = "folder"
+		      
+		    Case AllowedOption.OptionTypes.Integer
+		      type = "integer"
+		      
+		    Case AllowedOption.OptionTypes.Path
+		      type = "path"
+		      
+		    Case AllowedOption.OptionTypes.String
+		      type = "string"
+		      
+		    End Select
+		    
+		    If trim(type) <> "" Then
+		      optname = trim(optname + " (" + type + ")")
+		    End If
+		    
+		    If AllowedOptions(i).Required Then
+		      requireds.Append optname
+		    Else
+		      optionals.Append "[" + optname + "]"
+		    End If
+		  Next
+		  
+		  usage = usage + " " + join(requireds, " ") + " " + join(optionals, " ")
+		  
+		  stderr.WriteLine usage
+		  
+		  Dim names() As Params.PositionalItemHelp
+		  
+		  If UBound(names) > -1 Then
+		    stderr.WriteLine ""
+		    stderr.WriteLine "positional arguments:"
+		    For i As Integer = 0 To UBound(names)
+		      stderr.WriteLine "  " + names(i).Name + "  " + names(i).Description
+		    Next
+		  End If
 		  
 		  // Get the length of the longest option name
 		  dim longestLength as integer = 0
@@ -260,15 +362,32 @@ Protected Module Params
 		    longestLength = max(longestLength,len(AllowedOptions(i).LongOptionName))
 		  next
 		  
-		  for i as integer = 0 to UBound(AllowedOptions)
-		    stderr.WriteLine AllowedOptions(i).OptionUsageMessage(longestLength)
-		  next
+		  Redim requireds(-1)
+		  Redim optionals(-1)
+		  For i As Integer = 0 To UBound(AllowedOptions)
+		    If AllowedOptions(i).Required Then
+		      requireds.append AllowedOptions(i).OptionUsageMessage(longestLength)
+		    Else
+		      optionals.append AllowedOptions(i).OptionUsageMessage(longestLength)
+		    End If
+		  Next
+		  stderr.WriteLine ""
+		  stderr.WriteLine "required arguments:"
+		  For i As Integer = 0 To UBound(requireds)
+		    stderr.WriteLine requireds(i)
+		  Next
+		  stderr.WriteLine ""
+		  stderr.WriteLine "optional arguments:"
+		  For i As Integer = 0 To UBound(optionals)
+		    stderr.WriteLine optionals(i)
+		  Next
 		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
 		Private Sub StoreOption(opt as allowedoption, value as Variant, byref errorMessages() as string)
-		  select case opt.Type
+		  
+		  Select Case opt.Type
 		  case AllowedOption.OptionTypes.String
 		    Options.value(opt.StoreAs()) = value.StringValue
 		    
@@ -293,40 +412,35 @@ Protected Module Params
 		  case AllowedOption.OptionTypes.Flag
 		    Options.Value(opt.StoreAs()) = True
 		    
-		  case AllowedOption.OptionTypes.path, AllowedOption.OptionTypes.File, AllowedOption.OptionTypes.Folder
+		  Case AllowedOption.OptionTypes.path, AllowedOption.OptionTypes.File, AllowedOption.OptionTypes.Folder
 		    // Check to see if it's actually a path
 		    dim f as FolderItem = ParsePath(value)
 		    if f = nil then 
-		      stderr.WriteLine opt.LongOptionName + " is not a valid path"
-		      return
-		    end if
+		      errormessages.append opt.LongOptionName + " is not a valid path" 
+		    End If
 		    
-		    dim mustexist as boolean = true
-		    select case opt.type
-		    case AllowedOption.OptionTypes.File
-		      if f.Directory then
-		        stderr.WriteLine opt.LongOptionName + " must be a file"
-		        return
-		      end if
+		    If f <> Nil Then
+		      Dim mustexist As Boolean = opt.Type = AllowedOption.OptionTypes.File Or opt.type = AllowedOption.OptionTypes.Folder
+		      If mustexist And Not f.Exists Then
+		        errormessages.append opt.LongOptionName + " must exist"
+		      End If
 		      
-		    case AllowedOption.OptionTypes.Folder
-		      if not f.Directory then
-		        stderr.WriteLine opt.LongOptionName + " must be a folder"
-		        return
-		      end if
-		      
-		    case else
-		      mustexist = False
-		      
-		    end select
-		    
-		    if mustexist and not f.Exists then
-		      stderr.WriteLine opt.LongOptionName + " must exist"
-		      return
-		    end if
+		      select case opt.type
+		      case AllowedOption.OptionTypes.File
+		        if f.Directory then
+		          errormessages.append opt.LongOptionName + " must be a file"
+		        end if
+		        
+		      case AllowedOption.OptionTypes.Folder
+		        if not f.Directory then
+		          errormessages.append opt.LongOptionName + " must be a folder"
+		        End If
+		        
+		      End Select
+		    End If
 		    
 		    Options.Value(opt.StoreAs()) = value.StringValue
-		  end select
+		  End Select
 		End Sub
 	#tag EndMethod
 
@@ -347,6 +461,13 @@ Protected Module Params
 		Private AllowedOptions() As Params.AllowedOption
 	#tag EndProperty
 
+	#tag Property, Flags = &h0
+		#tag Note
+			This Is a description Of what your app does, For use by the PrintUsage method
+		#tag EndNote
+		Description As String
+	#tag EndProperty
+
 	#tag Property, Flags = &h21
 		Private options As Dictionary
 	#tag EndProperty
@@ -362,6 +483,11 @@ Protected Module Params
 
 
 	#tag ViewBehavior
+		#tag ViewProperty
+			Name="Description"
+			Group="Behavior"
+			Type="String"
+		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Index"
 			Visible=true
