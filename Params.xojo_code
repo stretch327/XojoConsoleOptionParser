@@ -104,10 +104,6 @@ Protected Module Params
 
 	#tag Method, Flags = &h1
 		Protected Function ParseOptions(args() as string, appDescription as string = "") As Boolean
-		  If appDescription <> "" Then
-		    stderr.WriteLine appDescription
-		  End If
-		  
 		  // First, lets make sure there are no duplicates
 		  Dim optionDuplicate As Boolean = False
 		  For i As Integer = 0 To UBound(AllowedOptions) - 1
@@ -129,109 +125,120 @@ Protected Module Params
 		  
 		  options = New Dictionary
 		  
-		  dim errorMessages() as string
+		  Dim errorMessages() As String
 		  
-		  for i as integer = 1 to UBound(args)
-		    dim arg as string = args(i)
-		    dim opt as Params.allowedOption
+		  For i As Integer = 1 To UBound(args)
+		    Dim arg As String = args(i)
+		    Dim opt As Params.allowedOption
 		    
-		    select case true
-		    case left(arg,2) = "--"
+		    Select Case True
+		    Case Left(arg,2) = "--"
 		      // Deal with extended options
-		      arg = mid(arg,3)
-		      If trim(arg) <> "" Then
-		        If instr(arg, "=") = 0 Then
-		          errorMessages.Append arg + " must be followed by ="
-		        End If
+		      arg = Mid(arg,3)
+		      
+		      If Trim(arg) <> "" Then
+		        Dim argName As String
+		        Dim value As Variant
 		        
-		        Dim p As Integer = instr(arg, "=")
-		        dim argName as string
-		        dim value as Variant
-		        if p>0 then
-		          argName = left(arg,p-1)
-		          value = mid(arg,p+1)
-		        else
+		        If InStr(arg, "=") = 0 Then
 		          argName = arg
-		          value = true
-		        end if
+		          
+		        Else
+		          Dim p As Integer = InStr(arg, "=")
+		          If p>0 Then
+		            argName = Left(arg,p-1)
+		            value = Mid(arg,p+1)
+		          Else
+		            argName = arg
+		            value = True
+		          End If
+		        End If
 		        
 		        // Match to allowed arguments
 		        opt = GetAllowedOptionByName(argName)
-		        if opt=nil then 
+		        If opt=Nil Then 
 		          errorMessages.Append arg + " is not a supported option."
-		          Continue for i
-		        end if
+		          Continue For i
+		        End If
+		        
+		        If opt.type <> AllowedOption.OptionTypes.Flag Then
+		          If value = Nil Then
+		            errorMessages.Append arg + " must be followed by ="
+		          Else
+		            value = True
+		          End If
+		        End If
 		        
 		        StoreOption(opt, value, errormessages)
 		        
-		      end if
+		      End If
 		      
-		    case left(arg,1) = "-"
-		      arg = mid(arg,2)
+		    Case Left(arg,1) = "-"
+		      arg = Mid(arg,2)
 		      // Deal with the compounded boolean properties
 		      // e.g. -zxvf, zxv are boolean while f has a parameter
-		      for j as integer = 1 to len(arg)-1
-		        dim optname as string = mid(arg,j,1)
+		      For j As Integer = 1 To Len(arg)-1
+		        Dim optname As String = Mid(arg,j,1)
 		        opt = GetAllowedOptionByName(optname)
-		        if opt = nil then
+		        If opt = Nil Then
 		          errorMessages.Append optname + " is not a supported option."
-		          Continue for i
-		        end if
+		          Continue For i
+		        End If
 		        
-		        Options.value(opt.StoreAs) = true
-		      next
+		        Options.value(opt.StoreAs) = True
+		      Next
 		      
-		      dim lastarg as string = right(arg,1)
+		      Dim lastarg As String = Right(arg,1)
 		      opt = GetAllowedOptionByName(lastarg)
-		      if opt<>nil then
-		        if opt.Type = AllowedOption.OptionTypes.Flag then
+		      If opt<>Nil Then
+		        If opt.Type = AllowedOption.OptionTypes.Flag Then
 		          Options.Value(opt.StoreAs) = True
-		        elseif UBound(args) > i and (left(args(i+1),1)<>"-" or CountFields(args(i+1)," ") > 1) then
+		        Elseif UBound(args) > i And (Left(args(i+1),1)<>"-" Or CountFields(args(i+1)," ") > 1) Then
 		          Options.value(opt.StoreAs) = args(i+1)
 		          i = i + 1
 		        Else
 		          stderr.WriteLine "Option " + lastarg + " requires a value."
 		          Return False
-		        end if
-		      end if
+		        End If
+		      End If
 		      
-		    case else
+		    Case Else
 		      // Anything that doesn't fall into the two cases above is probably a file
 		      OtherItems.Append arg
 		      
-		    end select
-		  next i
+		    End Select
+		  Next i
 		  
 		  // Now that everything's in, lets check to make sure the set is legal
-		  dim acceptedItems() as string
-		  for i as integer = 0 to UBound(AllowedOptions)
-		    dim opt as Params.allowedoption = AllowedOptions(i)
+		  Dim acceptedItems() As String
+		  For i As Integer = 0 To UBound(AllowedOptions)
+		    Dim opt As Params.allowedoption = AllowedOptions(i)
 		    acceptedItems.Append opt.LongOptionName
 		    acceptedItems.Append opt.ShortOptionLetter
-		    if opt.Required then
-		      if not Options.HasKey(opt.LongOptionName) and _
-		        not Options.HasKey(opt.ShortOptionLetter) then
-		        errorMessages.Append opt.OptionErrorMessage()
-		      end if
-		    end if
-		  next
+		    If opt.Required Then
+		      If Not Options.HasKey(opt.LongOptionName) And _
+		        Not Options.HasKey(opt.ShortOptionLetter) Then
+		        errorMessages.Append opt.OptionErrorMessage
+		      End If
+		    End If
+		  Next
 		  
 		  // Check for options that are specified, but not used
-		  dim keys() as Variant = Options.keys
-		  for i as integer = 0 to UBound(keys)
-		    if acceptedItems.IndexOf(keys(i).StringValue)=-1 then
+		  Dim keys() As Variant = Options.keys
+		  For i As Integer = 0 To UBound(keys)
+		    If acceptedItems.IndexOf(keys(i).StringValue)=-1 Then
 		      errorMessages.Append keys(i).StringValue + " is undefined and will be ignored."
-		    end if
-		  next
+		    End If
+		  Next
 		  
-		  if UBound(errorMessages)>-1 then
-		    PrintUsage()
+		  If UBound(errorMessages)>-1 Then
+		    PrintUsage
 		    stderr.WriteLine ""
-		    stderr.WriteLine join(errorMessages,EndOfLine)
-		    return False
-		  end if
+		    stderr.WriteLine Join(errorMessages,EndOfLine)
+		    Return False
+		  End If
 		  
-		  return True
+		  Return True
 		End Function
 	#tag EndMethod
 
@@ -487,6 +494,7 @@ Protected Module Params
 			Name="Description"
 			Group="Behavior"
 			Type="String"
+			EditorType="MultiLineEditor"
 		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Index"
