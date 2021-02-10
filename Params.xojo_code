@@ -164,9 +164,9 @@ Protected Module Params
 		        If opt.type <> AllowedOption.OptionTypes.Flag Then
 		          If value = Nil Then
 		            errorMessages.Append arg + " must be followed by ="
-		          Else
-		            value = True
 		          End If
+		        Else
+		          value = True
 		        End If
 		        
 		        StoreOption(opt, value, errormessages)
