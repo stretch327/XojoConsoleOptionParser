@@ -26,7 +26,7 @@ Inherits ConsoleApplication
 		  Dim myBool As Boolean = params.Value("boolean")
 		  
 		  // For File, Folder and Path options, there are helper methods for parsing into a real FolderItem
-		  dim myfile as FolderItem = Params.GetPathForOption("file")
+		  Dim myfile As FolderItem = Params.GetFolderItem("file")
 		End Function
 	#tag EndEvent
 

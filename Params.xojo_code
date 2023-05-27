@@ -47,17 +47,7 @@ Protected Module Params
 		  // We should never get here...
 		  Raise New UnsupportedOperationException
 		  
-		  return ""
-		End Function
-	#tag EndMethod
-
-	#tag Method, Flags = &h1
-		Attributes( Deprecated = "GetFolderItem" ) Protected Function GetPathForOption(name as string) As FolderItem
-		  if Options.HasKey(name) then
-		    return ParsePath(params.value(name))
-		  else
-		    return nil
-		  end if
+		  Return ""
 		End Function
 	#tag EndMethod
 
