@@ -18,6 +18,10 @@ Inherits ConsoleApplication
 		    Return 1
 		  End If
 		  
+		  // Tell SystemD that we started successfully and hook into the signals
+		  SignalHandling.Initialize
+		  SystemD.Initialize
+		  
 		  // Access options
 		  // You can access options either by their long or short names regardless of what the user specified on the command-line
 		  // params.Value("username") is equivalent to params.Value("u")
@@ -27,6 +31,13 @@ Inherits ConsoleApplication
 		  
 		  // For File, Folder and Path options, there are helper methods for parsing into a real FolderItem
 		  Dim myfile As FolderItem = Params.GetFolderItem("file")
+		  
+		  // If you need a run loop
+		  While SignalHandling.ShouldShutdown = False
+		    app.DoEvents(10)
+		  Wend
+		  
+		  SystemD.Send(SystemD.States.Stopping)
 		End Function
 	#tag EndEvent
 
