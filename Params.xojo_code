@@ -8,9 +8,9 @@ Protected Module Params
 
 	#tag Method, Flags = &h21
 		Private Function GetAllowedOptionByName(name as string) As AllowedOption
-		    if opt.LongOptionName = name or opt.ShortOptionLetter = name then
 		  For i As Integer = 0 To UBound(AllowedOptions)
 		    Dim opt As allowedOption = AllowedOptions(i)
+		    If opt.LongOptionName = name Or strcomp(opt.ShortOptionLetter, name, 0) = 0 Then
 		      Return opt
 		    End If
 		  Next
@@ -94,16 +94,20 @@ Protected Module Params
 
 	#tag Method, Flags = &h1
 		Protected Function ParseOptions(args() as string, appDescription as string = "") As Boolean
+		  If appDescription <> "" Then
+		    stderr.WriteLine appDescription
+		  End If
+		  
 		  // First, lets make sure there are no duplicates
 		  Dim optionDuplicate As Boolean = False
 		  For i As Integer = 0 To UBound(AllowedOptions) - 1
 		    For j As Integer = i + 1 To UBound(AllowedOptions)
-		      If AllowedOptions(i).ShortOptionLetter = AllowedOptions(j).ShortOptionLetter And AllowedOptions(i).ShortOptionLetter <> "" Then
-		        stderr.WriteLine "Duplicate Short Option Definition: " + AllowedOptions(i).ShortOptionLetter + " on " + AllowedOptions(i).LongOptionName + " and " + AllowedOptions(j).LongOptionName
+		      If AllowedOptions(i).ShortOptionLetter <> "" And StrComp(AllowedOptions(i).ShortOptionLetter, AllowedOptions(j).ShortOptionLetter, 0) = 0 Then
+		        stderr.WriteLine "Duplicate Short Option Definition: " + AllowedOptions(i).ShortOptionLetter
 		        optionDuplicate = True
 		      End If
-		      If AllowedOptions(i).LongOptionName = AllowedOptions(j).LongOptionName And AllowedOptions(i).LongOptionName <> "" Then
-		        stderr.WriteLine "Duplicate Long Option Definition: " + AllowedOptions(i).LongOptionName + " on " + AllowedOptions(i).ShortOptionLetter + " and " + AllowedOptions(j).ShortOptionLetter
+		      If AllowedOptions(i).LongOptionName <> "" And AllowedOptions(i).LongOptionName = AllowedOptions(j).LongOptionName Then
+		        stderr.WriteLine "Duplicate Long Option Definition: " + AllowedOptions(i).LongOptionName
 		        optionDuplicate = True
 		      End If
 		    Next
@@ -113,7 +117,7 @@ Protected Module Params
 		    Return False
 		  End If
 		  
-		  options = New Dictionary
+		  options = New CaseSensitiveDictionary
 		  
 		  Dim errorMessages() As String
 		  
@@ -125,23 +129,20 @@ Protected Module Params
 		    Case Left(arg,2) = "--"
 		      // Deal with extended options
 		      arg = Mid(arg,3)
-		      
 		      If Trim(arg) <> "" Then
+		        If InStr(arg, "=") = 0 Then
+		          errorMessages.Append arg + " must be followed by ="
+		        End If
+		        
+		        Dim p As Integer = InStr(arg, "=")
 		        Dim argName As String
 		        Dim value As Variant
-		        
-		        If InStr(arg, "=") = 0 Then
-		          argName = arg
-		          
+		        If p>0 Then
+		          argName = Left(arg,p-1)
+		          value = Mid(arg,p+1)
 		        Else
-		          Dim p As Integer = InStr(arg, "=")
-		          If p>0 Then
-		            argName = Left(arg,p-1)
-		            value = Mid(arg,p+1)
-		          Else
-		            argName = arg
-		            value = True
-		          End If
+		          argName = arg
+		          value = True
 		        End If
 		        
 		        // Match to allowed arguments
@@ -149,14 +150,6 @@ Protected Module Params
 		        If opt=Nil Then 
 		          errorMessages.Append arg + " is not a supported option."
 		          Continue For i
-		        End If
-		        
-		        If opt.type <> AllowedOption.OptionTypes.Flag Then
-		          If value = Nil Then
-		            errorMessages.Append arg + " must be followed by ="
-		          End If
-		        Else
-		          value = True
 		        End If
 		        
 		        StoreOption(opt, value, errormessages)
@@ -208,7 +201,7 @@ Protected Module Params
 		    If opt.Required Then
 		      If Not Options.HasKey(opt.LongOptionName) And _
 		        Not Options.HasKey(opt.ShortOptionLetter) Then
-		        errorMessages.Append opt.OptionErrorMessage
+		        errorMessages.Append opt.OptionErrorMessage()
 		      End If
 		    End If
 		  Next
@@ -222,7 +215,7 @@ Protected Module Params
 		  Next
 		  
 		  If UBound(errorMessages)>-1 Then
-		    PrintUsage
+		    PrintUsage()
 		    stderr.WriteLine ""
 		    stderr.WriteLine Join(errorMessages,EndOfLine)
 		    Return False
@@ -466,7 +459,7 @@ Protected Module Params
 	#tag EndProperty
 
 	#tag Property, Flags = &h21
-		Private options As Dictionary
+		Private Options As CaseSensitiveDictionary
 	#tag EndProperty
 
 	#tag Property, Flags = &h0
@@ -481,17 +474,12 @@ Protected Module Params
 
 	#tag ViewBehavior
 		#tag ViewProperty
-			Name="Description"
-			Group="Behavior"
-			Type="String"
-			EditorType="MultiLineEditor"
-		#tag EndViewProperty
-		#tag ViewProperty
 			Name="Index"
 			Visible=true
 			Group="ID"
 			InitialValue="-2147483648"
 			Type="Integer"
+			EditorType=""
 		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Left"
@@ -499,18 +487,23 @@ Protected Module Params
 			Group="Position"
 			InitialValue="0"
 			Type="Integer"
+			EditorType=""
 		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Name"
 			Visible=true
 			Group="ID"
+			InitialValue=""
 			Type="String"
+			EditorType=""
 		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Super"
 			Visible=true
 			Group="ID"
+			InitialValue=""
 			Type="String"
+			EditorType=""
 		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Top"
@@ -518,6 +511,15 @@ Protected Module Params
 			Group="Position"
 			InitialValue="0"
 			Type="Integer"
+			EditorType=""
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="Description"
+			Visible=false
+			Group="Behavior"
+			InitialValue=""
+			Type="String"
+			EditorType="MultiLineEditor"
 		#tag EndViewProperty
 	#tag EndViewBehavior
 End Module

@@ -8,6 +8,7 @@ Module=Params;Params.xojo_code;&h000000001BD7CFFF;&h0000000000000000;false
 Class=AllowedOption;Params/AllowedOption.xojo_code;&h000000000DBA0FFF;&h000000001BD7CFFF;false
 Class=PositionalItemHelp;Params/PositionalItemHelp.xojo_code;&h00000000581777FF;&h000000001BD7CFFF;false
 Module=SignalHandling;SignalHandling.xojo_code;&h000000000998FFFF;&h0000000000000000;false
+Class=CaseSensitiveDictionary;Params/CaseSensitiveDictionary.xojo_code;&h000000003B555FFF;&h000000001BD7CFFF;false
 MajorVersion=1
 MinorVersion=0
 SubVersion=0
