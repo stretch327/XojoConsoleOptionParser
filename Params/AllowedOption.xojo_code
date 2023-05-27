@@ -2,35 +2,35 @@
 Class AllowedOption
 	#tag Method, Flags = &h0
 		Sub Constructor(Name as String, Letter as String, Required as Boolean, Type as AllowedOption.OptionTypes, Description as string = "", StoreAsName as string = "")
-		  self.LongOptionName = name
-		  self.mStoreAs = name // Default to the long name
-		  self.ShortOptionLetter = Letter
-		  self.Required = Required
-		  self.Description = Description
-		  self.StoreAs = StoreAsName
-		  self.type = type
+		  Self.LongOptionName = name
+		  Self.mStoreAs = name // Default to the long name
+		  Self.ShortOptionLetter = Letter
+		  Self.Required = Required
+		  Self.Description = Description
+		  Self.StoreAs = StoreAsName
+		  Self.type = type
 		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
 		Function OptionErrorMessage() As String
-		  dim s as string
+		  Dim s As String
 		  
-		  if LongOptionName<>"" then
+		  If LongOptionName<>"" Then
 		    s = s + "--" + LongOptionName
-		  end if
+		  End If
 		  
-		  if ShortOptionLetter<>"" then
-		    if LongOptionName<>"" then s = s + "("
+		  If ShortOptionLetter<>"" Then
+		    If LongOptionName<>"" Then s = s + "("
 		    s = s + "-" + ShortOptionLetter
-		    if LongOptionName<>"" then s = s + ")"
-		  end if
+		    If LongOptionName<>"" Then s = s + ")"
+		  End If
 		  
-		  if Required then
+		  If Required Then
 		    s = s + " is missing"
-		  end if
+		  End If
 		  
-		  return s
+		  Return s
 		End Function
 	#tag EndMethod
 
@@ -43,38 +43,38 @@ Class AllowedOption
 		  End If
 		  
 		  longestlength = longestlength - Len(LongOptionName)
-		  if LongOptionName<>"" then
+		  If LongOptionName<>"" Then
 		    sa.Append "--" + LongOptionName
 		  Else
 		    sa.Append "  "
-		  end if
+		  End If
 		  
 		  Dim s As String = ""
 		  
 		  // Add spacing to make them even
 		  For i As Integer = 1 To longestlength
 		    s = s + " "
-		  next
+		  Next
 		  
-		  if ShortOptionLetter<>"" then
+		  If ShortOptionLetter<>"" Then
 		    s = s + "-" + ShortOptionLetter
 		  End If
 		  
 		  sa.Append s
 		  
-		  s = join(sa,", ")
+		  s = Join(sa,", ")
 		  
 		  If ShortOptionLetter="" Or LongOptionName = "" Then
 		    s = s.Replace(","," ") + "  "
-		  end if
+		  End If
 		  
 		  // Spacing before the description
 		  s = s + "     "
 		  
-		  if Description<>"" then s = s + Description + "."
-		  if Required then s = s + " Required. "
+		  If Description<>"" Then s = s + Description + "."
+		  If Required Then s = s + " Required. "
 		  
-		  return s
+		  Return s
 		End Function
 	#tag EndMethod
 
@@ -102,20 +102,20 @@ Class AllowedOption
 	#tag ComputedProperty, Flags = &h0
 		#tag Getter
 			Get
-			  if mStoreAs = "" then
-			    return LongOptionName
-			  else
-			    return mStoreAs
-			  end if
+			  If mStoreAs = "" Then
+			    Return LongOptionName
+			  Else
+			    Return mStoreAs
+			  End If
 			End Get
 		#tag EndGetter
 		#tag Setter
 			Set
-			  if value<>"" then
+			  If value<>"" Then
 			    mStoreAs = value
-			  else
+			  Else
 			    mStoreAs = LongOptionName
-			  end if
+			  End If
 			End Set
 		#tag EndSetter
 		StoreAs As String

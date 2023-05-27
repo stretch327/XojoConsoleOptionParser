@@ -2,50 +2,50 @@
 Protected Module Params
 	#tag Method, Flags = &h1
 		Protected Sub AddOption(Name as String, Letter as String, Required as Boolean, Type as AllowedOption.OptionTypes, Description as string = "", StoreAsName as string = "")
-		  AllowedOptions.Append(new AllowedOption(name,letter,Required,type,Description,StoreAsName))
+		  AllowedOptions.Append(New AllowedOption(name,letter,Required,type,Description,StoreAsName))
 		End Sub
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
 		Private Function GetAllowedOptionByName(name as string) As AllowedOption
-		  for i as integer = 0 to UBound(AllowedOptions)
-		    dim opt as allowedOption = AllowedOptions(i)
 		    if opt.LongOptionName = name or opt.ShortOptionLetter = name then
-		      return opt
-		    end if
-		  next
+		  For i As Integer = 0 To UBound(AllowedOptions)
+		    Dim opt As allowedOption = AllowedOptions(i)
+		      Return opt
+		    End If
+		  Next
 		  
-		  return nil
+		  Return Nil
 		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h1
 		Protected Function GetFolderitem(optionName as string) As FolderItem
 		  If Options.HasKey(optionName) Then
-		    return ParsePath(params.value(optionName))
-		  else
-		    return nil
-		  end if
+		    Return ParsePath(params.value(optionName))
+		  Else
+		    Return Nil
+		  End If
 		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h21
 		Private Function GetLongArgName(argname as string) As String
-		  for i as integer = 0 to UBound(AllowedOptions)
+		  For i As Integer = 0 To UBound(AllowedOptions)
 		    // Shortcut in case we were sent a long name
-		    if AllowedOptions(i).LongOptionName = argname then
-		      return argname
-		    end if
+		    If AllowedOptions(i).LongOptionName = argname Then
+		      Return argname
+		    End If
 		    
 		    // Use StrComp because "C" and "c" are considered different options
-		    if StrComp(AllowedOptions(i).ShortOptionLetter,argname,0) = 0 then
-		      return AllowedOptions(i).LongOptionName
-		    end if
+		    If StrComp(AllowedOptions(i).ShortOptionLetter, argname, 0) = 0 Then
+		      Return AllowedOptions(i).LongOptionName
+		    End If
 		    
-		  next
+		  Next
 		  
 		  // We should never get here...
-		  raise new UnsupportedOperationException
+		  Raise New UnsupportedOperationException
 		  
 		  return ""
 		End Function
@@ -65,19 +65,19 @@ Protected Module Params
 		Protected Function HasKey(optionName as string) As Boolean
 		  // First, make sure we're asking for the correct name
 		  If Options.HasKey(optionName) Then
-		    return True
-		  end if
+		    Return True
+		  End If
 		  
-		  for i as integer = 0 to UBound(AllowedOptions)
-		    dim opt as Params.AllowedOption = AllowedOptions(i)
+		  For i As Integer = 0 To UBound(AllowedOptions)
+		    Dim opt As Params.AllowedOption = AllowedOptions(i)
 		    If opt.LongOptionName = optionName And Options.HasKey(opt.ShortOptionLetter) Then
-		      return True
-		    elseif opt.ShortOptionLetter = optionName and Options.HasKey(opt.LongOptionName) then
-		      return True
-		    end if
-		  next
+		      Return True
+		    ElseIf strcomp(opt.ShortOptionLetter, optionName, 0) = 0 And Options.HasKey(opt.LongOptionName) Then
+		      Return True
+		    End If
+		  Next
 		  
-		  return False
+		  Return False
 		End Function
 	#tag EndMethod
 
@@ -86,18 +86,18 @@ Protected Module Params
 		  // First, make sure we're asking for the correct name
 		  If Options.HasKey(optionName) Then
 		    Return Options.value(optionName)
-		  end if
+		  End If
 		  
-		  for i as integer = 0 to UBound(AllowedOptions)
-		    dim opt as Params.AllowedOption = AllowedOptions(i)
+		  For i As Integer = 0 To UBound(AllowedOptions)
+		    Dim opt As Params.AllowedOption = AllowedOptions(i)
 		    If opt.LongOptionName = optionName And Options.HasKey(opt.ShortOptionLetter) Then
-		      return Params.value(opt.ShortOptionLetter)
-		    elseif opt.ShortOptionLetter = optionName and Options.HasKey(opt.LongOptionName) then
-		      return Params.value(opt.LongOptionName)
-		    end if
-		  next
+		      Return Params.value(opt.ShortOptionLetter)
+		    ElseIf opt.ShortOptionLetter = optionName And Options.HasKey(opt.LongOptionName) Then
+		      Return Params.value(opt.LongOptionName)
+		    End If
+		  Next
 		  
-		  return defaultvalue
+		  Return defaultvalue
 		  
 		End Function
 	#tag EndMethod
@@ -193,7 +193,7 @@ Protected Module Params
 		      If opt<>Nil Then
 		        If opt.Type = AllowedOption.OptionTypes.Flag Then
 		          Options.Value(opt.StoreAs) = True
-		        Elseif UBound(args) > i And (Left(args(i+1),1)<>"-" Or CountFields(args(i+1)," ") > 1) Then
+		        ElseIf UBound(args) > i And (Left(args(i+1),1)<>"-" Or CountFields(args(i+1)," ") > 1) Then
 		          Options.value(opt.StoreAs) = args(i+1)
 		          i = i + 1
 		        Else
@@ -244,64 +244,64 @@ Protected Module Params
 
 	#tag Method, Flags = &h21
 		Private Function ParsePath(path as string) As FolderItem
-		  dim pth() as string = split(path,kPathDelimiter)
+		  Dim pth() As String = Split(path,kPathDelimiter)
 		  
-		  dim f as FolderItem = SpecialFolder.CurrentWorkingDirectory
+		  Dim f As FolderItem = SpecialFolder.CurrentWorkingDirectory
 		  
-		  try
-		    for i as integer = 0 to UBound(pth)
+		  Try
+		    For i As Integer = 0 To UBound(pth)
 		      // If we're looking at the first element on Windows, check to see if it's a volume
-		      #if TargetWindows
-		        if i = 0 and instr(pth(0),":") = len(pth(0)) then
-		          for vol as integer = 0 to VolumeCount-1
-		            dim g as FolderItem = Volume(vol)
-		            if g.Name = pth(0) then
+		      #If TargetWindows
+		        If i = 0 And InStr(pth(0),":") = Len(pth(0)) Then
+		          For vol As Integer = 0 To VolumeCount-1
+		            Dim g As FolderItem = Volume(vol)
+		            If g.Name = pth(0) Then
 		              f = g
-		              Continue for i
-		            end if
-		          next
-		        end if
-		      #endif
+		              Continue For i
+		            End If
+		          Next
+		        End If
+		      #EndIf
 		      
-		      select case pth(i)
-		      case ""
-		        #if TargetMacOS or TargetLinux
-		          if i=0 then
+		      Select Case pth(i)
+		      Case ""
+		        #If TargetMacOS Or TargetLinux
+		          If i=0 Then
 		            f = GetFolderItem("/",FolderItem.PathTypeNative)
-		          end if
-		        #endif
+		          End If
+		        #EndIf
 		        
-		      case "." // same directory
+		      Case "." // same directory
 		        
-		      case ".." // Parent Directory
+		      Case ".." // Parent Directory
 		        f = f.Parent
 		        
-		      case "~" // User Home
+		      Case "~" // User Home
 		        f = SpecialFolder.UserHome
 		        
-		      case else
+		      Case Else
 		        f = f.Child(pth(i))
 		        
-		      end select
+		      End Select
 		      
-		      if f = nil then exit
-		    next i
+		      If f = Nil Then Exit
+		    Next i
 		    
-		    return f
-		  catch ex as NilObjectException
-		    return nil
-		  end try
+		    Return f
+		  Catch ex As NilObjectException
+		    Return Nil
+		  End Try
 		  
 		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h1
 		Protected Sub PrintUsage()
-		  If trim(Description) = "" Then
+		  If Trim(Description) = "" Then
 		    stderr.WriteLine Description
 		  End If
 		  stderr.WriteLine ""
-		  Dim usage As String = "usage: " + app.ExecutableFile.Name.replace(".debug", "")
+		  Dim usage As String = "usage: " + app.ExecutableFile.Name.Replace(".debug", "")
 		  
 		  // add all of the parameters to the usage statement by type
 		  Dim requireds() As String
@@ -338,8 +338,8 @@ Protected Module Params
 		      
 		    End Select
 		    
-		    If trim(type) <> "" Then
-		      optname = trim(optname + " (" + type + ")")
+		    If Trim(type) <> "" Then
+		      optname = Trim(optname + " (" + type + ")")
 		    End If
 		    
 		    If AllowedOptions(i).Required Then
@@ -349,7 +349,7 @@ Protected Module Params
 		    End If
 		  Next
 		  
-		  usage = usage + " " + join(requireds, " ") + " " + join(optionals, " ")
+		  usage = usage + " " + Join(requireds, " ") + " " + Join(optionals, " ")
 		  
 		  stderr.WriteLine usage
 		  
@@ -364,10 +364,10 @@ Protected Module Params
 		  End If
 		  
 		  // Get the length of the longest option name
-		  dim longestLength as integer = 0
-		  for i as integer = 0 to UBound(AllowedOptions)
-		    longestLength = max(longestLength,len(AllowedOptions(i).LongOptionName))
-		  next
+		  Dim longestLength As Integer = 0
+		  For i As Integer = 0 To UBound(AllowedOptions)
+		    longestLength = Max(longestLength,Len(AllowedOptions(i).LongOptionName))
+		  Next
 		  
 		  Redim requireds(-1)
 		  Redim optionals(-1)
@@ -395,34 +395,34 @@ Protected Module Params
 		Private Sub StoreOption(opt as allowedoption, value as Variant, byref errorMessages() as string)
 		  
 		  Select Case opt.Type
-		  case AllowedOption.OptionTypes.String
+		  Case AllowedOption.OptionTypes.String
 		    Options.value(opt.StoreAs()) = value.StringValue
 		    
-		  case AllowedOption.OptionTypes.Integer
-		    if IsNumeric(value) then
+		  Case AllowedOption.OptionTypes.Integer
+		    If IsNumeric(value) Then
 		      Options.Value(opt.StoreAs()) = value.IntegerValue
-		    else
+		    Else
 		      errorMessages.Append value.StringValue + " is not a number."
-		    end if
+		    End If
 		    
-		  case AllowedOption.OptionTypes.Float
-		    if IsNumeric(value) then
+		  Case AllowedOption.OptionTypes.Float
+		    If IsNumeric(value) Then
 		      Options.Value(opt.StoreAs()) = value.DoubleValue
-		    else
+		    Else
 		      errorMessages.Append value.StringValue + " is not a number."
-		    end if
+		    End If
 		    
-		  case AllowedOption.optiontypes.boolean
-		    dim v as string = left(value.StringValue,1)
-		    Options.Value(opt.StoreAs()) = ( v = "T" or v = "1" )
+		  Case AllowedOption.optiontypes.Boolean
+		    Dim v As String = Left(value.StringValue,1)
+		    Options.Value(opt.StoreAs()) = ( v = "T" Or v = "1" )
 		    
-		  case AllowedOption.OptionTypes.Flag
+		  Case AllowedOption.OptionTypes.Flag
 		    Options.Value(opt.StoreAs()) = True
 		    
 		  Case AllowedOption.OptionTypes.path, AllowedOption.OptionTypes.File, AllowedOption.OptionTypes.Folder
 		    // Check to see if it's actually a path
-		    dim f as FolderItem = ParsePath(value)
-		    if f = nil then 
+		    Dim f As FolderItem = ParsePath(value)
+		    If f = Nil Then 
 		      errormessages.append opt.LongOptionName + " is not a valid path" 
 		    End If
 		    
@@ -432,14 +432,14 @@ Protected Module Params
 		        errormessages.append opt.LongOptionName + " must exist"
 		      End If
 		      
-		      select case opt.type
-		      case AllowedOption.OptionTypes.File
-		        if f.Directory then
+		      Select Case opt.type
+		      Case AllowedOption.OptionTypes.File
+		        If f.Directory Then
 		          errormessages.append opt.LongOptionName + " must be a file"
-		        end if
+		        End If
 		        
-		      case AllowedOption.OptionTypes.Folder
-		        if not f.Directory then
+		      Case AllowedOption.OptionTypes.Folder
+		        If Not f.Directory Then
 		          errormessages.append opt.LongOptionName + " must be a folder"
 		        End If
 		        
